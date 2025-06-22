@@ -10,8 +10,8 @@ def login(browser):
     # email = input("email: ")
     # passwd = input("password: ")
 
-    email = "stillnot@myemail.nz"
-    passwd = "password123"
+    email = "adadadasddas"
+    passwd = "dsfvsdfsdf"
 
     email_field.clear()
     email_field.send_keys(email)
@@ -22,7 +22,7 @@ def login(browser):
     shadow_host = browser.find_element(By.CSS_SELECTOR, "ion-button[type='submit']")
     browser.execute_script("arguments[0].shadowRoot.querySelector('button[type=\"submit\"]').click();", shadow_host)
 
-    sleep(1)
+    sleep(2)
 
     if check_button_existence(By.ID, "ion-input-0", browser):
         print("Login failed")
@@ -39,7 +39,7 @@ def check_button_existence(locator_type, locator_value, browser):
 
 
 def get_books(browser):
-    browser.execute_script("document.body.style.zoom='10%'") # Zooms very far out to render all books
+    # browser.execute_script("document.body.style.zoom='10%'") # Zooms very far out to render all books
     book_names = browser.find_elements(By.CLASS_NAME, "entry-heading")
 
     books = list()
@@ -64,7 +64,7 @@ def book_selection(browser, books):
         return -1
 
     browser.find_element(By.XPATH, f"//h2[contains(text(), '{selected_book}')]").click()
-    sleep(0.5)
+    sleep(2)
     browser.switch_to.window(browser.window_handles[-1])
 
     print(f"Selected book: {selected_book}")
@@ -73,29 +73,49 @@ def book_selection(browser, books):
 
 
 def save_book_as_pdf(browser):
-    browser.find_element(By.ID, "btnFirst").click()
+    div_id = "pg1Overlay"
+
+    # calcs the needed zoom factor to fit the page in the window
+    zoom_script = f"""
+    var element = document.getElementById('{div_id}');
+    var rect = element.getBoundingClientRect();
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    var zx = w / rect.width;
+    var zy = h / rect.height;
+    var z = Math.min(zx, zy);
+    document.body.style.zoom = z;
+    return z;
+    """
+
+
+    # browser.execute_script(zoom_script)
+
+    sleep(2)
+
+    browser.save_full_page_screenshot("fullpage.png")
 
 def main():
     with webdriver.Firefox() as browser:
         browser.get("https://digi4school.at/ebooks")
+        browser.set_window_size(5000, 5000)
 
         sleep(2)
 
         if check_button_existence(By.ID, "ion-input-0", browser):
             login(browser)
 
-        sleep(1)
+        sleep(2)
 
         books = get_books(browser)
 
         while book_selection(browser, books) != 0:
             print("Please select a valid book.")
 
-        sleep(0.5)
+        sleep(5)
 
         save_book_as_pdf(browser)
 
-        sleep(60)
 
 
 if __name__ == '__main__':
