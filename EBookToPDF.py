@@ -7,11 +7,11 @@ def login(browser):
     email_field = browser.find_element(By.ID, "ion-input-0")
     passwd_field = browser.find_element(By.ID, "ion-input-1")
 
-    # email = input("email: ")
-    # passwd = input("password: ")
+    email = input("email: ")
+    passwd = input("password: ")
 
-    email = "notMyEmail@haha.at"
-    passwd = "guessIt"
+    # email = "notMyEmail@haha.at"
+    # vpasswd = "guessIt"
 
     email_field.clear()
     email_field.send_keys(email)
