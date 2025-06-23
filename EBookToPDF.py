@@ -17,7 +17,7 @@ variable sleeps times (alle 100ms check of geladen)
 eta / buch (progress bar)
 dir für bücher
 delete pics after conversion
-
+OCR 
 """
 
 
@@ -29,8 +29,8 @@ def login(browser):
     # email = input("email: ")
     # passwd = input("password: ")
 
-    email = "awdawdawdawdawdawd@:(.:)"
-    passwd = "Password1234567890"
+    email = "sdgsdffsd"
+    passwd = "sdfsdfsdffsd"
 
     email_field.clear()
     email_field.send_keys(email)
