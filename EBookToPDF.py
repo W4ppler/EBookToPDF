@@ -1,3 +1,4 @@
+import os
 import time
 from time import sleep
 
@@ -13,14 +14,15 @@ from datetime import datetime
 
 """"
 TODO:
-variable sleeps times (alle 100ms check of geladen)
+x variable sleeps times (alle 100ms check of geladen)
 eta / buch (progress bar)
 dir für bücher
-delete pics after conversion
+x delete pics after conversion
 OCR 
+compatible with all books?
 """
 
-
+loading_time_between_pages = 1
 
 def login(browser):
     email_field = browser.find_element(By.ID, "ion-input-0")
@@ -29,8 +31,8 @@ def login(browser):
     # email = input("email: ")
     # passwd = input("password: ")
 
-    email = "sdgsdffsd"
-    passwd = "sdfsdfsdffsd"
+    email = "awdadasdds"
+    passwd = "sdfgdfgdfad"
 
     email_field.clear()
     email_field.send_keys(email)
@@ -92,32 +94,35 @@ def book_selection(browser, books):
 
 
 def save_book_as_pdf(browser):
+    while not check_button_existence(By.ID, "txtPage", browser):
+        sleep(0.1)
+        print(datetime.now().strftime("%H:%M:%S") + " Waiting for book to load...")
+
     browser.execute_script("document.body.style.zoom = 2.5") # with 2.5 zoom, the page is filling the whole viewport
 
-    page = 1
-    page_list = list()
+    page = 135
     page_text_field = browser.find_element(By.ID, "txtPage")
-
 
     # initially sets the page to 1
     page_text_field.send_keys(page)
     page_text_field.send_keys(Keys.ENTER)
 
-    sleep(3)
+    while not check_button_existence(By.ID, "txtPage", browser):
+        sleep(0.1)
+        print(datetime.now().strftime("%H:%M:%S") + " Waiting for book to load...")
 
     page_list = []
     while not check_button_existence(By.CLASS_NAME, "ui-dialog", browser):
         browser.save_screenshot(f"{page}.png")
-        print(datetime.now().strftime("%H:%M:%S") + " Saving page " + str(page))
 
         crop_image(f"{page}.png")
-        print(datetime.now().strftime("%H:%M:%S") + " Cropped page " + str(page))
+        print(datetime.now().strftime("%H:%M:%S") + " Saved and cropped page " + str(page))
 
         page_list.append(f"{page}.png")
         page += 1
         page_text_field.send_keys(page)
         page_text_field.send_keys(Keys.ENTER)
-        sleep(3)
+        sleep(loading_time_between_pages)
 
     print(datetime.now().strftime("%H:%M:%S") + " Finished saving pages, now creating PDF...")
 
@@ -129,6 +134,9 @@ def save_book_as_pdf(browser):
 
     print(datetime.now().strftime("%H:%M:%S") + " PDF created successfully.")
 
+    for i in page_list:
+        os.remove(i)
+
 
 def crop_image(image):
     with Image.open(image) as img:
@@ -137,30 +145,42 @@ def crop_image(image):
 
 
 def main():
+    global loading_time_between_pages
     options = Options()
     options.add_argument('--headless')
     options.add_argument(f'--window-size=2480,3508')
 
     with webdriver.Chrome(options=options) as browser:
+        while True:
+            user_input = input("Enter loading time between pages (in seconds, default is 1, slower internet - higher, faster internet - smaller): ")
+            if user_input == "":
+                loading_time_between_pages = 1
+                break
+            try:
+                loading_time_between_pages = float(user_input)
+                break
+            except ValueError:
+                print("Please enter a valid number.")
+
         browser.get("https://digi4school.at/ebooks")
 
-        sleep(2)
+        while not check_button_existence(By.TAG_NAME, "img", browser):
+            sleep(0.1)
+            print(datetime.now().strftime("%H:%M:%S") + " Waiting for page to load...")
 
         if check_button_existence(By.ID, "ion-input-0", browser):
             login(browser)
 
-        sleep(2)
+        while not check_button_existence(By.TAG_NAME, "app-book-list-entry", browser):
+            sleep(0.1)
+            print(datetime.now().strftime("%H:%M:%S") + " Waiting for books to load...")
 
         books = get_books(browser)
 
         while book_selection(browser, books) != 0:
             print(datetime.now().strftime("%H:%M:%S") + " Please select a valid book.")
 
-        sleep(5)
-
         save_book_as_pdf(browser)
-
-
 
 
 if __name__ == '__main__':
