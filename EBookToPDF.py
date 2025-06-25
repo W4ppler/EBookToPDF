@@ -20,6 +20,7 @@ dir für bücher
 x delete pics after conversion
 OCR 
 compatible with all books?
+english books
 """
 
 loading_time_between_pages = 1
@@ -31,8 +32,8 @@ def login(browser):
     # email = input("email: ")
     # passwd = input("password: ")
 
-    email = "awdadasdds"
-    passwd = "sdfgdfgdfad"
+    email = "sdfsdfsdf"
+    passwd = "dfdfgdf"
 
     email_field.clear()
     email_field.send_keys(email)
@@ -42,7 +43,6 @@ def login(browser):
 
     shadow_host = browser.find_element(By.CSS_SELECTOR, "ion-button[type='submit']")
     browser.execute_script("arguments[0].shadowRoot.querySelector('button[type=\"submit\"]').click();", shadow_host)
-
     sleep(2)
 
     if check_button_existence(By.ID, "ion-input-0", browser):
@@ -94,35 +94,42 @@ def book_selection(browser, books):
 
 
 def save_book_as_pdf(browser):
-    while not check_button_existence(By.ID, "txtPage", browser):
-        sleep(0.1)
-        print(datetime.now().strftime("%H:%M:%S") + " Waiting for book to load...")
-
-    browser.execute_script("document.body.style.zoom = 2.5") # with 2.5 zoom, the page is filling the whole viewport
-
-    page = 135
-    page_text_field = browser.find_element(By.ID, "txtPage")
-
-    # initially sets the page to 1
-    page_text_field.send_keys(page)
-    page_text_field.send_keys(Keys.ENTER)
+    page = 1
 
     while not check_button_existence(By.ID, "txtPage", browser):
         sleep(0.1)
         print(datetime.now().strftime("%H:%M:%S") + " Waiting for book to load...")
+
+    if check_button_existence(By.ID, "routlineClose", browser):
+        browser.find_element(By.ID, "routlineClose").click()
+        print(datetime.now().strftime("%H:%M:%S") + " Closed outline popup")
+
+    browser.find_element(By.ID, "btnFirst").click()
+
+    while not check_button_existence(By.ID, "txtPage", browser):
+        sleep(0.1)
+        print(datetime.now().strftime("%H:%M:%S") + " Waiting for book to load...")
+
+    sleep(3)  # first page might take a bit longer to load
+
+    # zoom = calculate_zoom(browser)
+    browser.execute_script(f"document.body.style.zoom = 3")
 
     page_list = []
-    while not check_button_existence(By.CLASS_NAME, "ui-dialog", browser):
+    # while not check_button_existence(By.CLASS_NAME, "ui-dialog", browser):
+    i = 0
+    while i < 5:
         browser.save_screenshot(f"{page}.png")
 
-        crop_image(f"{page}.png")
+        # crop_image(f"{page}.png")
         print(datetime.now().strftime("%H:%M:%S") + " Saved and cropped page " + str(page))
 
         page_list.append(f"{page}.png")
         page += 1
-        page_text_field.send_keys(page)
-        page_text_field.send_keys(Keys.ENTER)
+        browser.find_element(By.ID, "btnNext").click()
         sleep(loading_time_between_pages)
+        i += 1
+
 
     print(datetime.now().strftime("%H:%M:%S") + " Finished saving pages, now creating PDF...")
 
@@ -138,6 +145,25 @@ def save_book_as_pdf(browser):
         os.remove(i)
 
 
+def calculate_zoom(browser):
+    overlay_rect = browser.execute_script("""
+        var el = document.getElementById('pg1Overlay');
+        var rect = el.getBoundingClientRect();
+        return {width: rect.width, height: rect.height};
+    """)
+
+
+    viewport_width = browser.execute_script("return window.innerWidth;")
+    viewport_height = browser.execute_script("return window.innerHeight;")
+
+    available_height = viewport_height - 40 # navbar
+
+    zoom_w = viewport_width / overlay_rect['width']
+    zoom_h = available_height / overlay_rect['height']
+
+    return min(zoom_w, zoom_h)
+
+
 def crop_image(image):
     with Image.open(image) as img:
         cropped = img.crop((96, 128, 2368, 3343))
@@ -148,7 +174,7 @@ def main():
     global loading_time_between_pages
     options = Options()
     options.add_argument('--headless')
-    options.add_argument(f'--window-size=2480,3508')
+    options.add_argument(f'--window-size=3720,5262') # 2480,3508
 
     with webdriver.Chrome(options=options) as browser:
         while True:
@@ -181,7 +207,6 @@ def main():
             print(datetime.now().strftime("%H:%M:%S") + " Please select a valid book.")
 
         save_book_as_pdf(browser)
-
 
 if __name__ == '__main__':
     main()
