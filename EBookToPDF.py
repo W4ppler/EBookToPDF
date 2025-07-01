@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 """"
 TODO:
 convert all books
+next page popup
 """
 
 mode_all = False
@@ -47,7 +48,7 @@ def login(browser):
                                        "//*[@id=\"main-content\"]/app-login/ion-content/div[1]/div/form/div[2]/ion-button[1]")
     browser.execute_script("arguments[0].shadowRoot.querySelector('button[type=\"submit\"]').click();", shadow_host)
 
-    sleep(loading_time_between_pages)
+    sleep(loading_time_between_pages + 0.5)
 
     if element_exists(By.XPATH, "//*[@id=\"ion-input-0\"]", browser):
         print(datetime.now().strftime("%H:%M:%S") + " Login failed")
@@ -452,6 +453,8 @@ def save_book_as_pdf_scook(browser):
 
     browser.switch_to.frame(iframe)
 
+    sleep(loading_time_between_pages)
+
     crop_box = browser.execute_script(f"""
         var el = document.getElementsByClassName('annotations-drawable')[0]
         var rect = el.getBoundingClientRect();
@@ -481,11 +484,45 @@ def main():
 
     with webdriver.Chrome(options=options) as browser:
         wait = WebDriverWait(browser, 15)
+        sleep(5) # to avoid the warning obstructing the input()
+
+        print("""  
+                   ███████╗██████╗  ██████╗  ██████╗ ██╗  ██╗                                    
+                   ██╔════╝██╔══██╗██╔═══██╗██╔═══██╗██║ ██╔╝                                     
+                   █████╗  ██████╔╝██║   ██║██║   ██║█████╔╝                                     
+                   ██╔══╝  ██╔══██╗██║   ██║██║   ██║██╔═██╗                                      
+                   ███████╗██████╔╝╚██████╔╝╚██████╔╝██║  ██╗                                     
+                   ╚══════╝╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝                             
+                           XX                                                      
+                         XXXX                                                      
+                        XXXX                ███████████  ██████████   ███████████  
+                       XXXX        XXX      ░░███░░░░░███░░███░░░░███ ░░███░░░░░░█ 
+                      XXXX        XXXXX      ░███    ░███ ░███   ░░███ ░███   █ ░  
+                     XXXXXX        XXXXX     ░██████████  ░███    ░███ ░███████    
+                    XXXXXXXXXXXXXXXXXXXXX    ░███░░░░░░   ░███    ░███ ░███░░░█    
+                     XXXXXXXXXXXXXXXXXXXX    ░███         ░███    ███  ░███  ░     
+                                   XXXXX     █████        ██████████   █████       
+                                  XXXXX     ░░░░░        ░░░░░░░░░░   ░░░░░        
+                                   XXX                                             """)
+
+        print("""                                                  
+                ██╗    ██╗██╗  ██╗██████╗ ██████╗ ██╗     ███████╗██████╗ 
+                ██║    ██║██║  ██║██╔══██╗██╔══██╗██║     ██╔════╝██╔══██╗
+                ██║ █╗ ██║███████║██████╔╝██████╔╝██║     █████╗  ██████╔╝
+                ██║███╗██║╚════██║██╔═══╝ ██╔═══╝ ██║     ██╔══╝  ██╔══██╗
+                ╚███╔███╔╝     ██║██║     ██║     ███████╗███████╗██║  ██║
+                 ╚══╝╚══╝      ╚═╝╚═╝     ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝
+                                                            
+            """)
+
 
         while True:
             user_input = input(
                 datetime.now().strftime(
-                    "%H:%M:%S") + " Enter loading time between pages (in seconds, default is 0.5, slower internet - higher, faster internet - smaller): ")
+                    "%H:%M:%S") + " Enter loading time between pages in seconds. By default this is set to 0.5. If you have \n"
+                                  "a slower internet connection, you may prefer a higher value. If the \"next page\" pop ups on each \n"
+                                  "page annoy you, you may also prefer a higher value. \n"
+                                  "Seconds: ")
             if user_input == "":
                 break
             try:
