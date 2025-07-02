@@ -48,10 +48,11 @@ def login(browser):
                                        "//*[@id=\"main-content\"]/app-login/ion-content/div[1]/div/form/div[2]/ion-button[1]")
     browser.execute_script("arguments[0].shadowRoot.querySelector('button[type=\"submit\"]').click();", shadow_host)
 
-    sleep(loading_time_between_pages + 0.5)
+    sleep(loading_time_between_pages + 1)
 
     if element_exists(By.XPATH, "//*[@id=\"ion-input-0\"]", browser):
         print(datetime.now().strftime("%H:%M:%S") + " Login failed")
+        sleep(loading_time_between_pages/2)
         browser.find_element(By.CLASS_NAME, "alert-button").click()
         login(browser)
 
@@ -79,7 +80,7 @@ def get_books(browser):
     :param browser: Selenium WebDriver instance
     :return: List of user owned books (Strings of the titles) and a list of book elements (Selenium WebElement objects)
     """
-    
+
     browser.execute_script("document.body.style.zoom='10%'")  # Zooms very far out to render all books
     book_elements = browser.find_elements(By.CLASS_NAME, "entry-heading")
 
@@ -240,14 +241,12 @@ def save_book_as_pdf_main(browser, booktype, crop_box):
 
     # i = 0
 
-
-
     # while i < 5:  # only for testing
     while True:
         action = ActionChains(browser)
 
         try:
-            action.move_by_offset(50,0)
+            action.move_by_offset(50, 0)
             action.perform()  # avoids "next page" popup that appears when hovering over "next page btn"
         except MoveTargetOutOfBoundsException:
             action.move_by_offset(-2000, 0)  # if the offset is out of bounds, just reverse a bit
@@ -484,7 +483,7 @@ def main():
 
     with webdriver.Chrome(options=options) as browser:
         wait = WebDriverWait(browser, 15)
-        sleep(5) # to avoid the warning obstructing the input()
+        sleep(5)  # to avoid the warning obstructing the input()
 
         print("""  
                    ███████╗██████╗  ██████╗  ██████╗ ██╗  ██╗                                    
@@ -514,7 +513,6 @@ def main():
                  ╚══╝╚══╝      ╚═╝╚═╝     ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝
                                                             
             """)
-
 
         while True:
             user_input = input(
@@ -571,8 +569,7 @@ def main():
             print(datetime.now().strftime("%H:%M:%S") + " Scook book detected.")
             save_book_as_pdf_scook(browser)
         elif book_type == 3:
-            print(datetime.now().strftime(
-                "%H:%M:%S") + " BiBox book detected.")
+            print(datetime.now().strftime("%H:%M:%S") + " BiBox book detected.")
             save_book_as_pdf_bibox(browser)
         else:
             print(datetime.now().strftime("%H:%M:%S") + " Unknown book type detected.")
@@ -581,8 +578,6 @@ def main():
             print(datetime.now().strftime("%H:%M:%S") + " Exiting...")
             sleep(1)
             return
-
-
 
 
 if __name__ == '__main__':
