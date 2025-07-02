@@ -106,6 +106,11 @@ precompiled windows executable, which you can run without installing Python or a
 ## Compatibility
 I tested it on Windows 11 and Ubuntu 25.04, but it should work on any operating system that supports Python and has Google Chrome installed.
 
+## AI Assistance
+I used AI Autocomplete from the GitHub Copilot plugin for PyCharm. I wrote this readme myself, but asked Copilot in the end on what I
+could improve. It suggested some changes, from which I applied some. There are parts in the script which are entirely written by AI, I only
+asked it to give me ideas on how to fix some problems, if I had been stuck. 
+
 ## Disclaimer
 This script does not constitute legal advice. Copyright laws and digital rights
 management (DRM) regulations vary by jurisdiction and are complex. You are solely
