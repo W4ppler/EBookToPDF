@@ -14,7 +14,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 """"
 TODO:
-convert all books
 next page popup
 """
 
@@ -35,8 +34,8 @@ def login(browser):
     email = input(datetime.now().strftime("%H:%M:%S") + " Email: ")
     passwd = input(datetime.now().strftime("%H:%M:%S") + " Password: ")
 
-    # email = "adawdaef.sefsef@sefsefsef.sefdgrth"
-    # passwd = "sefsefsdrggsdrfbdfb"
+    # email = "dgcvbcvbmamamammmawasefsefsefsefsefesfsefsecom"  # for testing purposes, changed my email before every commit :)
+    # passwd = "sergdhfgrewae"
 
     email_field.clear()
     email_field.send_keys(email)
@@ -52,15 +51,15 @@ def login(browser):
 
     if element_exists(By.XPATH, "//*[@id=\"ion-input-0\"]", browser):
         print(datetime.now().strftime("%H:%M:%S") + " Login failed")
-        sleep(loading_time_between_pages/2)
+        sleep(loading_time_between_pages)
         browser.find_element(By.CLASS_NAME, "alert-button").click()
         login(browser)
 
 
 def element_exists(locator_type, locator_value, browser):
     """
-    Checks if an element exists on the page. 
-    
+    Checks if an element exists on the page.
+
     :param locator_type: Default Webdriver.find_element type, e.g. By.ID, By.CLASS_NAME, etc.
     :param locator_value: Default Webdriver.find_element value, e.g. "my_id", "my_class", etc.
     :param browser: Selenium WebDriver instance
@@ -76,7 +75,7 @@ def element_exists(locator_type, locator_value, browser):
 def get_books(browser):
     """
     Obtains all book names from the site trough looking for the class "entry-heading" (in these classes, books are stored).
-    
+
     :param browser: Selenium WebDriver instance
     :return: List of user owned books (Strings of the titles) and a list of book elements (Selenium WebElement objects)
     """
@@ -93,9 +92,9 @@ def get_books(browser):
 
 def book_selection(browser, book_names, book_elements):
     """
-    Firstly it lists all ur books, then it asks the user to select one. 
+    Firstly it lists all ur books, then it asks the user to select one.
     It also validates the input and switches to the newly opened book tab.
-    
+
     :param browser: Selenium WebDriver instance
     :param book_names: for visual representation of the books
     :param book_elements: for interacting with the books (selecting them)
@@ -108,10 +107,14 @@ def book_selection(browser, book_names, book_elements):
         print("[" + str(book_names.index(book)) + "] " + book)
         # print([ord(c) for c in book])
 
-    selected_book = input(datetime.now().strftime("%H:%M:%S") + " Select a book: ")
+    selected_book = input(
+        datetime.now().strftime("%H:%M:%S") + " Select a book (enter 'all' to convert all owned books): ")
 
     if selected_book.lower() == 'all':
         mode_all = True
+        print(datetime.now().strftime("%H:%M:%S") + " Selected mode: all books")
+        save_all_books_as_pdf(browser, book_elements)
+        return 0
 
     try:
         selected_book = book_names[int(selected_book)]
@@ -131,9 +134,9 @@ def book_selection(browser, book_names, book_elements):
 def sub_book_selection(browser):
     """
     Only needed if there are sub_books (some books in Digi4School give u another list of options when u click on them).
-    Firstly it lists all the sub_book items, then it asks the user to select one. 
+    Firstly it lists all the sub_book items, then it asks the user to select one.
     It also validates the input and switches to the newly opened book tab.
-    
+
     :param browser: Selenium WebDriver instance
     :return: status code -1 if failed, 0 if successful
     """
@@ -142,18 +145,18 @@ def sub_book_selection(browser):
     books = list()
 
     for book_element in book_elements:
-        if book_element.text:  # cause for some reason there are thousands of "tx" elements with no text
+        if book_element.text:  # cause for some reason there are hundres of "tx" elements with no text
             books.append(book_element.text)
 
     for book in books:
         print("[" + str(books.index(book)) + "] " + book)
 
-    selected_book = input(datetime.now().strftime("%H:%M:%S") + " Select a sub_book: ")
+    selected_book = input(datetime.now().strftime("%H:%M:%S") + " Select a sub book: ")
 
     try:
         selected_book = books[int(selected_book)]
     except (ValueError, IndexError):
-        print(datetime.now().strftime("%H:%M:%S") + " This sub_book does not exist")
+        print(datetime.now().strftime("%H:%M:%S") + " This sub book does not exist")
         return -1
 
     book_elements[books.index(selected_book)].click()
@@ -161,7 +164,7 @@ def sub_book_selection(browser):
     sleep(loading_time_between_pages)
     browser.switch_to.window(browser.window_handles[-1])
 
-    print(datetime.now().strftime("%H:%M:%S") + f" Selected sub_book: {selected_book}")
+    print(datetime.now().strftime("%H:%M:%S") + f" Selected sub book: {selected_book}")
 
     return 0
 
@@ -169,7 +172,7 @@ def sub_book_selection(browser):
 def crop_image(image, crop_box):
     """
     Crops the image based on the provided rectangle coordinates, cause the screenshots are full page screenshots.
-    
+
     :param image: path to the image file
     :param crop_box: the associative array containing the coordinates of the rectangle to crop (left, top, right, bottom)
     """
@@ -182,7 +185,7 @@ def images_are_identical(path1, path2):
     """
     Checks if two images are identical by comparing their pixel data. Needed for checking if the script reached the end of the book.
     If the images are identical, it returns True, thus the script stops saving pages.
-    
+
     :param path1: path to the first image
     :param path2: path to the second image
     :return: True or False whether the images are identical or not
@@ -201,7 +204,7 @@ def images_are_identical(path1, path2):
 def check_book_type(browser):
     """
     Check the book type based on the elements present in the browser.
-    
+
     :param browser: Selenium WebDriver instance
     :return: -1 unknown and therefore unsupported book type, 0 sub_books are available, 1 Digi4School book (HPThek and
     digibox books use the same layout), 2 Scook book, 3 BiBox book
@@ -222,16 +225,17 @@ def check_book_type(browser):
         return -1
 
 
-def save_book_as_pdf_main(browser, booktype, crop_box):
+def save_book_as_pdf_core(browser, booktype, crop_box):
     """
-    Creates dir for ebook, saves all pages as images, crops them using the crop_box and then creates a PDF from the 
+    Creates dir for ebook, saves all pages as images, crops them using the crop_box and then creates a PDF from the
     images.
-    
+
     :param browser: Selenium WebDriver instance
     :param booktype: 1, 2 or 3, depending on the book type (1 -> Digi4School book, 2 -> scook book, 3 -> bibox book)
     :param crop_box: associative array containing the coordinates of the rectangle to crop (left, top, right, bottom)
     """
     global bookname
+    global mode_all
     page = 1
     page_list = []
 
@@ -241,10 +245,9 @@ def save_book_as_pdf_main(browser, booktype, crop_box):
 
     # i = 0
 
-    # while i < 5:  # only for testing
+    # while i < 3:  # only for testing
     while True:
         action = ActionChains(browser)
-
         try:
             action.move_by_offset(50, 0)
             action.perform()  # avoids "next page" popup that appears when hovering over "next page btn"
@@ -296,9 +299,9 @@ def save_book_as_pdf_main(browser, booktype, crop_box):
 def save_book_as_pdf_digi4school(browser):
     """
     Special function for Digi4School books, as some books have a special layout and popups. After closing the popups,
-    adjusting the zoom, selecting the first page, retrieving the crop_box using javascript and the elements of the DOM, 
+    adjusting the zoom, selecting the first page, retrieving the crop_box using javascript and the elements of the DOM,
     it calls the main function to save the book as a PDF. This function "prepars" the book for saving.
-    
+
     :param browser: Selenium WebDriver instance
     """
     # print(browser.page_source)
@@ -333,7 +336,7 @@ def save_book_as_pdf_digi4school(browser):
                     return rect;
                 """)
 
-    save_book_as_pdf_main(browser, 1, crop_box)
+    save_book_as_pdf_core(browser, 1, crop_box)
 
 
 def save_book_as_pdf_bibox(browser):
@@ -341,7 +344,7 @@ def save_book_as_pdf_bibox(browser):
     Special function for bibox books, as some books have a special layout and popups. After closing the popups, selecting
     the first page and calculating the crop_box, it calls the main saving function to save the book as a PDF. This function
     prepares the book for saving.
-    
+
     :param browser: Selenium WebDriver instance
     """
     wait = WebDriverWait(browser, 15)
@@ -416,7 +419,7 @@ def save_book_as_pdf_bibox(browser):
     crop_box = {"left": left_border + 64, "top": top_border + 24, "right": right_border + 64,
                 "bottom": bottom_border + 24}
 
-    save_book_as_pdf_main(browser, 3, crop_box)
+    save_book_as_pdf_core(browser, 3, crop_box)
 
 
 def save_book_as_pdf_scook(browser):
@@ -424,7 +427,7 @@ def save_book_as_pdf_scook(browser):
     Special function for scook books, as some books have a special layout and popups. After closing the popups, calculating
     the crop_box, selecting the first page and switching to the iframe, it calls the main saving function to save the book.
     This function prepares the book for saving.
-    
+
     :param browser: Selenium WebDriver instance
 
     """
@@ -469,7 +472,101 @@ def save_book_as_pdf_scook(browser):
     browser.find_element(By.XPATH,
                          "/html/body/div[3]/div/div[2]/div/div/div/div[5]/div/div[2]/div[2]/button[1]").click()
 
-    save_book_as_pdf_main(browser, 2, crop_box)
+    save_book_as_pdf_core(browser, 2, crop_box)
+
+
+def save_all_books_as_pdf(browser, book_elements):
+    """
+    Still in development.
+
+    :param browser:
+    :param book_elements:
+    :return:
+    """
+
+    global loading_time_between_pages
+    global bookname
+
+    for i in range(len(book_elements)):
+        print(datetime.now().strftime("%H:%M:%S") + f" Saving item {book_elements[i].text}...")
+        bookname = book_elements[i].text.replace("/", "_")
+        book_elements[i].click()
+        browser.switch_to.window(browser.window_handles[-1])
+
+        sleep(loading_time_between_pages + 1)
+
+        book_type = check_book_type(browser)
+        if book_type == 0:
+            print(datetime.now().strftime("%H:%M:%S") + " sub books detected, iterating trough all sub books...")
+            sub_book_elements = browser.find_elements(By.CLASS_NAME, "tx")
+            sub_books = list()
+
+            for sub_book_element in sub_book_elements:
+                if sub_book_element.text:  # because for some reason there are hundres of "tx" elements with no text
+                    sub_books.append(sub_book_element)
+
+            sub_book_list_page = browser.current_window_handle  # to switch back to the subbook list once a subbook is saved
+            parent_book_name = bookname
+            for sub_book in sub_books:
+                print(browser.current_url)
+                print(datetime.now().strftime("%H:%M:%S") + f" Saving sub_book {sub_book.text}...")
+                bookname = os.path.join(bookname, sub_book.text.replace("/", "_"))
+                current_page = browser.current_window_handle
+                sub_book.click()
+
+                sleep(loading_time_between_pages)
+                browser.switch_to.window(browser.window_handles[-1])
+                sleep(loading_time_between_pages)
+
+                if browser.current_window_handle == current_page:
+                    print(datetime.now().strftime("%H:%M:%S") + " No new window opened, skipping...")
+                    sleep(loading_time_between_pages)
+                    continue
+
+                book_type = check_book_type(browser)
+                if book_type == 1:
+                    print(datetime.now().strftime("%H:%M:%S") + " Digi4School book detected, saving as PDF...")
+                    save_book_as_pdf_digi4school(browser)
+                elif book_type == 2:
+                    print(datetime.now().strftime("%H:%M:%S") + " Scook book detected, saving as PDF...")
+                    save_book_as_pdf_scook(browser)
+                elif book_type == 3:
+                    print(datetime.now().strftime("%H:%M:%S") + " BiBox book detected, saving as PDF...")
+                    save_book_as_pdf_bibox(browser)
+                else:
+                    print(datetime.now().strftime("%H:%M:%S") + " Unknown book type detected, skipping...")
+
+                bookname = parent_book_name
+                browser.close()
+                print(datetime.now().strftime("%H:%M:%S") + " Closed sub book tab.")
+                browser.switch_to.window(sub_book_list_page)
+                sleep(loading_time_between_pages)
+
+            browser.switch_to.window(browser.window_handles[0])
+
+
+        elif book_type == 1:
+            print(datetime.now().strftime("%H:%M:%S") + " Digi4School book detected, saving as PDF...")
+            save_book_as_pdf_digi4school(browser)
+            browser.close()
+            browser.switch_to.window(browser.window_handles[0])
+        elif book_type == 2:
+            print(datetime.now().strftime("%H:%M:%S") + " Scook book detected, saving as PDF...")
+            save_book_as_pdf_scook(browser)
+            browser.close()
+            browser.switch_to.window(browser.window_handles[0])
+        elif book_type == 3:
+            print(datetime.now().strftime("%H:%M:%S") + " BiBox book detected, saving as PDF...")
+            save_book_as_pdf_bibox(browser)
+            browser.close()
+            browser.switch_to.window(browser.window_handles[0])
+        else:
+            print(datetime.now().strftime("%H:%M:%S") + " Unknown book type detected, skipping...")
+            sleep(loading_time_between_pages)
+            browser.close()
+            sleep(loading_time_between_pages)
+            browser.switch_to.window(browser.window_handles[0])
+            sleep(loading_time_between_pages)
 
 
 def main():
@@ -511,7 +608,7 @@ def main():
                 ██║███╗██║╚════██║██╔═══╝ ██╔═══╝ ██║     ██╔══╝  ██╔══██╗
                 ╚███╔███╔╝     ██║██║     ██║     ███████╗███████╗██║  ██║
                  ╚══╝╚══╝      ╚═╝╚═╝     ╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝
-                                                            
+
             """)
 
         while True:
@@ -529,7 +626,7 @@ def main():
             except ValueError:
                 print(datetime.now().strftime("%H:%M:%S") + " Please enter a valid number.")
 
-        browser.get("https://digi4school.at/ebooks")
+        browser.get("https://digi4school.at/overview")
 
         wait.until(EC.any_of(
             EC.visibility_of_element_located((By.XPATH, "//*[@id=\"ion-input-0\"]")),
@@ -543,6 +640,11 @@ def main():
 
         while book_selection(browser, book_names, book_elements) != 0:
             print(datetime.now().strftime("%H:%M:%S") + " Please select a valid book.")
+
+        if mode_all:
+            print(datetime.now().strftime("%H:%M:%S") + " Finished saving all books. Press Enter to exit.")
+            input()
+            return
 
         wait.until(EC.any_of(
             EC.visibility_of_element_located((By.CLASS_NAME, "tx")),
@@ -578,6 +680,9 @@ def main():
             print(datetime.now().strftime("%H:%M:%S") + " Exiting...")
             sleep(1)
             return
+
+        print("Press Enter to exit")
+        input()
 
 
 if __name__ == '__main__':
