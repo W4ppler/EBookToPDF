@@ -210,6 +210,7 @@ def check_book_type(browser):
     digibox books use the same layout), 2 Scook book, 3 BiBox book
     """
     # print(browser.page_source)
+    sleep(loading_time_between_pages+3)
 
     if element_exists(By.CLASS_NAME, "tx", browser):
         return 0
@@ -238,6 +239,12 @@ def save_book_as_pdf_core(browser, booktype, crop_box):
     global mode_all
     page = 1
     page_list = []
+    action = ActionChains(browser)
+
+    action.move_by_offset(200, 200)
+    action.perform()
+    action.move_by_offset(-200, -200)
+    action.perform()
 
     if not os.path.exists(bookname):
         os.makedirs(bookname)
@@ -247,13 +254,6 @@ def save_book_as_pdf_core(browser, booktype, crop_box):
 
     # while i < 3:  # only for testing
     while True:
-        action = ActionChains(browser)
-        try:
-            action.move_by_offset(50, 0)
-            action.perform()  # avoids "next page" popup that appears when hovering over "next page btn"
-        except MoveTargetOutOfBoundsException:
-            action.move_by_offset(-2000, 0)  # if the offset is out of bounds, just reverse a bit
-
         browser.save_screenshot(f"{bookname}" + "/" + f"{page}.png")
 
         crop_image(f"{bookname}" + "/" + f"{page}.png", crop_box)
@@ -276,6 +276,14 @@ def save_book_as_pdf_core(browser, booktype, crop_box):
         else:
             print(datetime.now().strftime("%H:%M:%S") + " Unknown book type, cannot save pages")
             return
+
+
+        # avoids "next page" popup that appears when hovering over "next page btn"
+
+        action.move_by_offset(200, 200)
+        action.perform()
+        action.move_by_offset(-200, -200)
+        action.perform()
 
         sleep(loading_time_between_pages)
         # i += 1
@@ -306,14 +314,6 @@ def save_book_as_pdf_digi4school(browser):
     """
     # print(browser.page_source)
 
-    if element_exists(By.ID, "routlineClose", browser):  # outline popup usually appears in german books
-        print(datetime.now().strftime("%H:%M:%S") + " Detected outline popup")
-        try:
-            browser.find_element(By.ID, "routlineClose").click()
-            print(datetime.now().strftime("%H:%M:%S") + " Closed outline popup")
-        except ElementNotInteractableException:
-            print(datetime.now().strftime("%H:%M:%S") + " Outline popup isnt visible")
-
     if element_exists(By.CLASS_NAME, "tlypageguide_dismiss",
                       browser):  # usually appears when u open a book the first time
         print(datetime.now().strftime("%H:%M:%S") + " Infotour popup detected")
@@ -323,9 +323,17 @@ def save_book_as_pdf_digi4school(browser):
         except ElementNotInteractableException:
             print(datetime.now().strftime("%H:%M:%S") + " Infotour popup isnt visible")
 
-    sleep(loading_time_between_pages)
+    if element_exists(By.ID, "routlineClose", browser):  # outline popup usually appears in german books
+        print(datetime.now().strftime("%H:%M:%S") + " Detected outline popup")
+        try:
+            browser.find_element(By.ID, "routlineClose").click()
+            print(datetime.now().strftime("%H:%M:%S") + " Closed outline popup")
+        except ElementNotInteractableException:
+            print(datetime.now().strftime("%H:%M:%S") + " Outline popup isnt visible")
 
+    sleep(loading_time_between_pages)
     browser.find_element(By.ID, "btnFirst").click()
+    sleep(loading_time_between_pages)
 
     if element_exists(By.ID, "btnZoomHeight", browser):
         browser.find_element(By.ID, "btnZoomHeight").click()
@@ -416,7 +424,9 @@ def save_book_as_pdf_bibox(browser):
     while numpy.all(img_array[bottom_border, :] == (243, 245, 246)):
         bottom_border -= 1
 
-    crop_box = {"left": left_border + 64, "top": top_border + 24, "right": right_border + 64,
+    # the borders are retrieved by checking when pixels are not white anymore
+    # the +119 and +79 are offsets that are determined by the header and sidepanels
+    crop_box = {"left": left_border + 119, "top": top_border + 79, "right": right_border + 64,
                 "bottom": bottom_border + 24}
 
     save_book_as_pdf_core(browser, 3, crop_box)
@@ -494,7 +504,6 @@ def save_all_books_as_pdf(browser, book_elements):
         browser.switch_to.window(browser.window_handles[-1])
 
         sleep(loading_time_between_pages + 1)
-
         book_type = check_book_type(browser)
         if book_type == 0:
             print(datetime.now().strftime("%H:%M:%S") + " sub books detected, iterating trough all sub books...")
@@ -508,7 +517,6 @@ def save_all_books_as_pdf(browser, book_elements):
             sub_book_list_page = browser.current_window_handle  # to switch back to the subbook list once a subbook is saved
             parent_book_name = bookname
             for sub_book in sub_books:
-                print(browser.current_url)
                 print(datetime.now().strftime("%H:%M:%S") + f" Saving sub_book {sub_book.text}...")
                 bookname = os.path.join(bookname, sub_book.text.replace("/", "_"))
                 current_page = browser.current_window_handle
@@ -523,6 +531,7 @@ def save_all_books_as_pdf(browser, book_elements):
                     sleep(loading_time_between_pages)
                     continue
 
+                sleep(loading_time_between_pages + 1)
                 book_type = check_book_type(browser)
                 if book_type == 1:
                     print(datetime.now().strftime("%H:%M:%S") + " Digi4School book detected, saving as PDF...")
@@ -646,15 +655,7 @@ def main():
             input()
             return
 
-        wait.until(EC.any_of(
-            EC.visibility_of_element_located((By.CLASS_NAME, "tx")),
-            EC.visibility_of_element_located((By.XPATH, "//*[@id=\"txtPage\"]")),
-            EC.visibility_of_element_located((By.XPATH, "//*[@id=\"page-product-viewer\"]")),
-            EC.visibility_of_element_located((By.XPATH,
-                                              "//*[@id=\"bbx\"]/app-root/app-book/div/mat-sidenav-container/mat-sidenav-content/app-double-page-view/div[1]/div[2]/app-book-page-viewer/div/app-book-gl/div/canvas")),
-            EC.visibility_of_element_located((By.XPATH, "//*[@id=\"undefined\"]/app-book-gl/div/canvas"))
-        ))
-
+        sleep(loading_time_between_pages + 1)
         book_type = check_book_type(
             browser)  # 0 -> sub_books, 1 -> Digi4School book (hpthek and digibox books are also compatible), 2 -> scook, 3 -> bibox, None -> unknown book type
 
@@ -662,6 +663,8 @@ def main():
             print(datetime.now().strftime("%H:%M:%S") + " sub_books detected.")
             while sub_book_selection(browser) != 0:
                 print(datetime.now().strftime("%H:%M:%S") + " Please select a valid sub_book.")
+
+            sleep(loading_time_between_pages + 1)
             book_type = check_book_type(browser)
 
         if book_type == 1:
